@@ -10,8 +10,14 @@ const cssCache = `
 `;
 
 self.addEventListener('fetch', event => {
-	if (event.request.url.includes('bootstrap.min.css')) {
-		event.respondWith(new Response(cssCache, {headers: {'Content-Type': 'text/css'}} ));
-	}
+	event.respondWith(
+		fetch(event.request).catch(() => {
+			return new Response(`
+				Welcome to the Gotham Imperial Hotel.
+				There seems to be a problem with your connection.
+				We look forward to telling you about our hotel as sons as you go online
+			`)
+		})
+	);
 });
 
