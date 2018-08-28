@@ -26,7 +26,7 @@ self.addEventListener('fetch', event => {
 		fetch(event.request).catch(() => {
 
 			// Cache
-			return caches.match(event.request).then(response => {
+			return caches.match(event.request, {ignoreSearch: true}).then(response => {
 				console.warn('Response:', response);
 				console.warn('Event: ', event.request.headers.get('accept').includes('text/html'));
 
