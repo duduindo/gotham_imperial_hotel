@@ -1,42 +1,21 @@
-const CACHE_NAME = 'gith-cache';
-const CACHE_URLS = [
-	'/index-offline.html',
-	'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css',
-	'/css/gih-offline.css',
-	'/img/jumbo-background-sm.jpg',
-	'/img/logo-header.png',
-];
 
 
-self.addEventListener('install', event => {
-	event.waitUntil(
-		caches.open(CACHE_NAME).then(cache => {
-			console.log(cache);
-
-			return cache.addAll(CACHE_URLS);
-		})
-	);
+self.addEventListener('install', () => {
+  console.log('install');
 });
 
+self.addEventListener('activate', () => {
+  console.log('activate');
+});
 
 self.addEventListener('fetch', event => {
-	event.respondWith(
-		// Fetch
-		fetch(event.request).catch(() => {
+  const hasBootstrap = event.request.url.includes('bootstrap.min.css');
 
-			// Cache
-			return caches.match(event.request, {ignoreSearch: true}).then(response => {
-				console.warn('Response:', response);
-				console.warn('Event: ', event.request.headers.get('accept').includes('text/html'));
+  if (hasBootstrap) {
+    console.log(`Fetch request for: ${event.request.url}`);
 
-				if (response) {
-					return response;
-				} else if (event.request.headers.get('accept').includes('text/html')) {
-					return caches.match('/index-offline.html');
-				}
-			});
-
-
-		})
-	);
+    event.respondWith(
+      new Response('.hotel-slogan { background: green !important; } nav { display: none; }', { headers: { 'Content-Type': 'text/css' } })
+    );
+  }
 });
