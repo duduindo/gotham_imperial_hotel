@@ -1,23 +1,42 @@
-const responseContent = `
-	<html>
-		<head>
-			<style>
-				body { text-align: center; background-color: #333; color: #eee; }
-			</style>
-		</head>
-		<body>
-			<h1>Gotham Imperial Hotel</h1>
-			<p>There seems to be a problem with your connection.</p>
-			<p>We look forward to telling you about our hotel as sons as you go online.</p>
-		</body>
-	</html>				
-`;
+const CACHE_NAME = 'gith-cache';
+const CACHE_URLS = [
+	'/index-offline.html',
+	'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css',
+	'/css/gih-offline.css',
+	'/img/jumbo-background-sm.jpg',
+	'/img/logo-header.png',
+];
+
+
+self.addEventListener('install', event => {
+	event.waitUntil(
+		caches.open(CACHE_NAME).then(cache => {
+			console.log(cache);
+
+			return cache.addAll(CACHE_URLS);
+		})
+	);
+});
 
 
 self.addEventListener('fetch', event => {
 	event.respondWith(
+		// Fetch
 		fetch(event.request).catch(() => {
-			return new Response(responseContent, { headers: {'Content-Type': 'text/html'} });
+
+			// Cache
+			return caches.match(event.request, {ignoreSearch: true}).then(response => {
+				console.warn('Response:', response);
+				console.warn('Event: ', event.request.headers.get('accept').includes('text/html'));
+
+				if (response) {
+					return response;
+				} else if (event.request.headers.get('accept').includes('text/html')) {
+					return caches.match('/index-offline.html');
+				}
+			});
+
+
 		})
 	);
 });
