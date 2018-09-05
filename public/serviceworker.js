@@ -1,21 +1,36 @@
+// https://github.com/duduindo/gotham_imperial_hotel/blob/ch04-start/public/serviceworker.js
+
+const CACHE_NAME = 'gih-cache';
+const CACHED_URLS = [
+  "/index-offline.html",
+  "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css",
+  "/css/gih-offline.css",
+  "/img/jumbo-background-sm.jpg",
+  "/img/logo-header.png",
+];
 
 
-self.addEventListener('install', () => {
-  console.log('install');
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(CACHED_URLS);
+    })
+  );
 });
 
-self.addEventListener('activate', () => {
-  console.log('activate');
-});
 
 self.addEventListener('fetch', event => {
-  const hasBootstrap = event.request.url.includes('bootstrap.min.css');
+  
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      return caches.match(event.request).then(response => {
+        if (response) {
+          return response;
+        } else if (event.request.headers.get('accept').includes('text/html')) {
+          return caches.match('/index-offline.html');
+        }
+      });
+    })
+  );
 
-  if (hasBootstrap) {
-    console.log(`Fetch request for: ${event.request.url}`);
-
-    event.respondWith(
-      new Response('.hotel-slogan { background: green !important; } nav { display: none; }', { headers: { 'Content-Type': 'text/css' } })
-    );
-  }
 });
