@@ -1,6 +1,6 @@
 // https://github.com/duduindo/gotham_imperial_hotel/blob/ch04-start/public/serviceworker.js
 
-const CACHE_NAME = 'gih-cache-v2';
+const CACHE_NAME = 'gih-cache-v3';
 const CACHED_URLS = [
   "/index-offline.html",
   "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css",
@@ -18,6 +18,19 @@ self.addEventListener('install', event => {
   );
 });
 
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (CACHE_NAME !== cacheName && cacheName.startsWith('gih-cache')) {
+            return caches.delete(cacheName);
+          }
+        })
+      )
+    }) 
+  );
+});
 
 self.addEventListener('fetch', event => {  
   event.respondWith(
