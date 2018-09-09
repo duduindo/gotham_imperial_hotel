@@ -1,47 +1,37 @@
 // https://github.com/duduindo/gotham_imperial_hotel/blob/ch04-start/public/serviceworker.js
 
-const CACHE_NAME = 'gih-cache-v3';
-const CACHED_URLS = [
-  "/index-offline.html",
-  "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css",
-  "/css/gih-offline.css",
-  "/img/jumbo-background-sm.jpg",
-  "/img/logo-header.png",
+
+const immutableRequests = [
+  '/fancy__header_background.mp4',
+  '/vendor/bootstrap/3.3.7/bootstrap.min.css',
+  '/css/style-v355.css',
+];
+
+const mutableRequests = [
+  'app-settings.json',
+  'index.html',
 ];
 
 
-self.addEventListener('install', event => {
+self.addEventListener('install', event => {    
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(CACHED_URLS);
-    })
-  );
-});
+    caches.open('cache-v2').then(cache => {
+      const newImmutableRequests = [];
 
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map(cacheName => {
-          if (CACHE_NAME !== cacheName && cacheName.startsWith('gih-cache')) {
-            return caches.delete(cacheName);
-          }
+        immutableRequests.map(url => {
+          return caches.match(url).then(response => {
+            if (response) {
+              return cache.put(url, response);
+            } else {
+              newImmutableRequests.push(url);
+              return Promise.resolve();
+            }
+          });
         })
-      );
-    }) 
-  );
-});
-
-self.addEventListener('fetch', event => {  
-  event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request).then(response => {
-        if (response) {
-          return response;
-        } else if (event.request.headers.get('accept').includes('text/html')) {
-          return caches.match('/index-offline.html');
-        }
-      });
+      ).then(() => {
+        return cache.addAll(newImmutableRequests.concat(mutableRequests));
+      })
     })
   );
 });
