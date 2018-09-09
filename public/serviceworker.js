@@ -1,37 +1,30 @@
 // https://github.com/duduindo/gotham_imperial_hotel/blob/ch04-start/public/serviceworker.js
 
+// Exemplo: https://www.talater.com/adderall/
+// In your service worker
+/** 
+ * importScripts é uma função nativa:
+ *  - https://developer.mozilla.org/en-US/docs/Web/API/WorkerGlobalScope/importScripts 
+ */
+importScripts('https://cdnjs.cloudflare.com/ajax/libs/cache.adderall/1.0.0/cache.adderall.js');
 
-const immutableRequests = [
-  '/fancy__header_background.mp4',
-  '/vendor/bootstrap/3.3.7/bootstrap.min.css',
-  '/css/style-v355.css',
+
+var STATIC_FILES = [
+  'video/cache.adderall.demo.mp4',
+  '/bootstrap/3.3.7/css/bootstrap.min.css',
+  '/js/2.6.0/annyang.min.js'
 ];
 
-const mutableRequests = [
+var MUTABLE_FILES = [
   'app-settings.json',
-  'index.html',
+  'index.html'
 ];
 
 
-self.addEventListener('install', event => {    
+self.addEventListener('install', event => {
   event.waitUntil(
     caches.open('cache-v2').then(cache => {
-      const newImmutableRequests = [];
-
-      return Promise.all(
-        immutableRequests.map(url => {
-          return caches.match(url).then(response => {
-            if (response) {
-              return cache.put(url, response);
-            } else {
-              newImmutableRequests.push(url);
-              return Promise.resolve();
-            }
-          });
-        })
-      ).then(() => {
-        return cache.addAll(newImmutableRequests.concat(mutableRequests));
-      })
+      return adderall.addAll(cache, STATIC_FILES, MUTABLE_FILES);
     })
   );
 });
