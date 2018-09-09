@@ -1,30 +1,72 @@
-// https://github.com/duduindo/gotham_imperial_hotel/blob/ch04-start/public/serviceworker.js
-
-// Exemplo: https://www.talater.com/adderall/
-// In your service worker
-/** 
- * importScripts é uma função nativa:
- *  - https://developer.mozilla.org/en-US/docs/Web/API/WorkerGlobalScope/importScripts 
+/**
+ * Chapert - 5 Embracing Offline-Fisrt
  */
-importScripts('https://cdnjs.cloudflare.com/ajax/libs/cache.adderall/1.0.0/cache.adderall.js');
+
+/**
+ * Cache Only
+ * - Respond to all requests for a resource with a response from the cache
+ */
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+  );
+});
 
 
-var STATIC_FILES = [
-  'video/cache.adderall.demo.mp4',
-  '/bootstrap/3.3.7/css/bootstrap.min.css',
-  '/js/2.6.0/annyang.min.js'
-];
+/**
+ * Cache, falling back to network
+ * - Similiar to cache only, thie pattern will respond to requests with content from the cache.
+ */
+ self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    });
+  );
+ });
 
-var MUTABLE_FILES = [
-  'app-settings.json',
-  'index.html'
-];
 
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open('cache-v2').then(cache => {
-      return adderall.addAll(cache, STATIC_FILES, MUTABLE_FILES);
+/**
+ * Network only
+ * - The classic model of the web. Try to fetch the request from the network
+ */
+self.addEventListener('fetch', fetch => {
+  event.respondWith(
+    fetch(event.request);
+  );
+});
+
+/**
+ * Network, falling back to cache
+ * - Always fetch the request from the network
+ */
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
+    })
+  );
+});
+
+/**
+ * Cache, then network
+ * - Display data from the cache immediately while checking the network fro a more up-to-date version.
+ */
+// nothing
+
+
+/**
+ * Generic fallback
+ * - When the content the user asked for could not be found in the cache, and the network is not available, 
+ *   this pattern returns an alternate "default fallback" from the cache instead of returning an error.
+ */
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      return caches.match(event.request).then(response => {
+        return response || caches.match('/generic.png');
+      });
     })
   );
 });
