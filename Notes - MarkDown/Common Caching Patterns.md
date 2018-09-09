@@ -90,5 +90,48 @@ self.addEventListener('fetch', event => {
     })
   );
 });
+```
 
+### Cache, falling back to network with frequent updates
+For resources that do change from time to time, but where showing the latest version is less important than
+returning a fast response (e.g, user avatars), we can modify the cache, *falling back to nwtwork* pattern
+to always fetch the requested resource from the network even when it is found in the cache.
+
+```js
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.open('cache-name').then(cache => {
+      return cache.match(event.request).then(cachedResponse => {
+        const fetchPromise = fetch(event.request).then(networkResponse => {
+          cache.put(event.request, networkResponse.clone());
+
+          return networkResponse;
+        });
+
+        return cachedResponse || fetchPromise;
+      });
+    })
+  );
+});
+```
+
+
+### Network, falling back o cache with frequent updates
+When it is important to always serve the latest version of a resource available, we can use thus twist on 
+the *network, falling back to cache* pattern.
+
+```js
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.open('cache-name').then(cache => {
+      return fetch(event.request).then(networkResponse => {
+        cache.put(event.request, networkResponse.clone());
+
+        return networkResponse;
+      }).catch(() => {
+        return caches.match(event.request);
+      });
+    })
+  );
+});
 ```
