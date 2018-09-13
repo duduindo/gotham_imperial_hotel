@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'gih-cache-v4';
+const CACHE_NAME = 'gih-cache-v5';
 const CACHED_URLS = [
 	// Our HTML
 	'index.html',
@@ -12,18 +12,23 @@ const CACHED_URLS = [
 	// JavaScript
 	'https://code.jquery.com/jquery-3.0.0.min.js',
 	'/js/app.js',
+	'/js/offline-map.js',
 
 	// Images
 	'/img/about-hotel-luxury.jpg',
 	'/img/about-hotel-spa.jpg',
 	'/img/event-calendar-link.jpg',
+	'/img/event-default.jpg',
 	'/img/jumbo-background.jpg',
 	'/img/logo-header.png',
 	'/img/logo.png',
 	'/img/logo-top-background.png',
+	'/img/map-offline.jpg',
 	'/img/reservation-gih.jpg',
 	'/img/switch.png',
 ];
+
+const googleMapsAIPJS = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDm9jndhfbcWByQnrivoaWAEQA8jy3COdE&callback=initMap';
 
 
 self.addEventListener('install', event => {
@@ -42,19 +47,68 @@ self.addEventListener('fetch', event => {
 
 		event.respondWith(
 			caches.open(CACHE_NAME).then(cache => {
-				return cache.match('/index.html').then(cachedResponse => {
+				return cache.match('/index.html').then(cacheResponse => {
 					const fetchPromise = fetch('/index.html').then(networkResponse => {
 						cache.put('/index.html', networkResponse.clone());
 						
 						return networkResponse;
 					});
 
-					return cachedResponse || fetchPromise;
+					return cacheResponse || fetchPromise;
 				});
 			})
 		);
+	} 
+	
+	// Handle requests for Google Maps JavaScript API file
+	else if (requestURL.href === googleMapsAIPJS) {
+		event.respondWith(
+			fetch(`${googleMapsAIPJS}&${Date.now()}`, {mode: 'no-cors', cache: 'no-store'})
+				.catch(() => {
+					return caches.match('/js/offline-map.js');
+				})
+		);
+	}
 
-	} else if (CACHED_URLS.includes(requestURL.href) || CACHED_URLS.includes(requestURL.pathname)) {
+	// Handle requests for events JSON file
+	else if (requestURL.pathname === '/events.json') {
+		event.respondWith(
+			caches.open(CACHE_NAME).then(cache => {
+				return fetch(event.request).then(networkResponse => {
+					cache.put(event.request, networkResponse.clone());
+
+					return networkResponse;
+				}).catch(() => {
+					return caches.match(event.request);
+				});
+			})
+		);
+	}
+
+	// Handle request for event images
+	else if (requestURL.pathname.startsWith('/img/event-')) {
+		event.respondWith(
+			caches.open(CACHE_NAME).then(cache => {
+				return cache.match(event.request).then(cacheResponse => {
+					return cacheResponse || fetch(event.request).then(networkResponse => {
+						cache.put(event.request, networkResponse.clone());
+
+						return networkResponse;
+					}).catch(() => {
+						return cache.match('/img/event-default.jpg');
+					});
+				});
+			})
+		);
+	}
+
+	// Handle analytics requests
+	else if (requestURL.host === 'www.google-analytics.com') {
+		event.respondWith(fetch(event.request));
+	}
+
+	// Handle requests for files cached during installation
+	else if (CACHED_URLS.includes(requestURL.href) || CACHED_URLS.includes(requestURL.pathname)) {
 		event.respondWith(
 			caches.open(CACHE_NAME).then(cache => {
 				return cache.match(event.request).then(response => {
