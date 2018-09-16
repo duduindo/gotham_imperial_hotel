@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+'<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -17,6 +17,16 @@
   /*        Write your code below this comment          */
   /******************************************************/
 
+  const request = window.indexedDB.open('my-database', 1);
+
+  request.onerror = event => console.log('Database error: ', event.target.error);
+
+  request.onsuccess = event => {
+    const db = event.target.result;
+
+    console.log('Database: ', db);
+    console.log('Object store names: ', db.objectStoreNames);
+  };
 
 
   /******************************************************/
