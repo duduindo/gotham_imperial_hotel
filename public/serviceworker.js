@@ -2,7 +2,8 @@
 const CACHE_NAME = 'gih-cache-v5';
 const CACHED_URLS = [
 	// Our HTML
-	'index.html',
+	'/index.html',
+  '/my-account.html',
 
 	// Stylesheets
 	'/css/gih.css',
@@ -13,6 +14,8 @@ const CACHED_URLS = [
 	'https://code.jquery.com/jquery-3.0.0.min.js',
 	'/js/app.js',
 	'/js/offline-map.js',
+  '/js/my-account.js',
+  '/reservations.json',
 
 	// Images
 	'/img/about-hotel-luxury.jpg',
@@ -40,17 +43,16 @@ self.addEventListener('install', event => {
 });
 
 
-self.addEventListener('fetch', event => {	
+self.addEventListener('fetch', event => {
 	const requestURL = new URL(event.request.url);
 
 	if (requestURL.pathname === '/' || requestURL.pathname === '/index.html') {
-
 		event.respondWith(
 			caches.open(CACHE_NAME).then(cache => {
 				return cache.match('/index.html').then(cacheResponse => {
 					const fetchPromise = fetch('/index.html').then(networkResponse => {
 						cache.put('/index.html', networkResponse.clone());
-						
+
 						return networkResponse;
 					});
 
@@ -58,8 +60,33 @@ self.addEventListener('fetch', event => {
 				});
 			})
 		);
-	} 
-	
+	}
+
+
+  // My account
+  else if (requestURL.pathname === '/my-account') {
+    event.respondWith(
+      caches.match('/my-account.html').then(response => {
+        return response || fetch('/my-account.html');
+      })
+    );
+  }
+
+  // Reservation json
+  else if (requestURL.pathname === '/reservations.json') {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(cache => {
+        return fetch(event.request).then(networkResponse => {
+          cache.put(event.request, networkResponse.clone());
+
+          return networkResponse;
+        }).catch(() => {
+          return caches.match(event.request);
+        });
+      })
+    );
+  }
+
 	// Handle requests for Google Maps JavaScript API file
 	else if (requestURL.href === googleMapsAIPJS) {
 		event.respondWith(
