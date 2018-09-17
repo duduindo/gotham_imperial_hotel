@@ -17,15 +17,35 @@
   /*        Write your code below this comment          */
   /******************************************************/
 
-  const request = window.indexedDB.open('my-database', 1);
+  const request = window.indexedDB.open('my-database', 2);
 
-  request.onerror = event => console.log('Database error: ', event.target.error);
+  request.onupgradeneeded = event => {
+    const db = event.target.result;
+
+    db.createObjectStore('customers', { keyPath: 'passport_number' });
+  };
+
+  request.onerror = event => console.warn('Database error: ', event.target.error);
 
   request.onsuccess = event => {
     const db = event.target.result;
+    const customerData = [
+      { passport_number: 6651, first_name: 'Tal', last_name: 'Ater' },
+      { passport_number: 7727, first_name: 'Archi', last_name: 'Stevens' },
+    ];
 
-    console.log('Database: ', db);
-    console.log('Object store names: ', db.objectStoreNames);
+    // Transactions
+    const customerTransaction = db.transaction('customers', 'readwrite');
+
+    customerTransaction.onerror = event => console.warn('Transaction error: ', event.target.error);
+
+
+    // Transactions put data
+    const customerStore = customerTransaction.objectStore('customers');
+
+    for (let i = 0; i < customerData.length; i++) {
+      customerStore.add(customerData[i]);
+    }
   };
 
 
