@@ -21,25 +21,18 @@
 
   request.onupgradeneeded = event => {
     const db = event.target.result;
+    const oldVersion = event.oldVersion;
 
-    db.createObjectStore('customers', { keyPath: 'passport_number' });
+    if (oldVersion < 2) {
+      db.createObjectStore('customers', { keyPath: 'passport_number' });
+      console.log('Store: customers');
+    }
+
+    if (oldVersion < 3) {
+      db.createObjectStore('employees', { keyPath: 'employee_id' });
+      console.log('Store: employees');
+    }
   };
-
-  request.onerror = event => console.warn('Database error: ', event.target.error);
-
-  request.onsuccess = event => {
-    event.target.result
-      .transaction('customers')
-      .objectStore('customers')
-      .get(7727)
-      .onsuccess = event => {
-        const customer = event.target.result;
-
-        console.log('First name: ', customer.first_name);
-        console.log('Last name: ', customer.last_name);
-      };
-  };
-
 
   /******************************************************/
   </script>
