@@ -29,23 +29,16 @@
 
   request.onsuccess = event => {
     const db = event.target.result;
-    const customerData = [
-      { passport_number: 6651, first_name: 'Tal', last_name: 'Ater' },
-      { passport_number: 7727, first_name: 'Archi', last_name: 'Stevens' },
-    ];
-
-    // Transactions
-    const customerTransaction = db.transaction('customers', 'readwrite');
-
-    customerTransaction.onerror = event => console.warn('Transaction error: ', event.target.error);
-
-
-    // Transactions put data
+    const customerTransaction = db.transaction('customers');
     const customerStore = customerTransaction.objectStore('customers');
+    const request = customerStore.get(1111);
 
-    for (let i = 0; i < customerData.length; i++) {
-      customerStore.add(customerData[i]);
-    }
+    request.onsuccess = event => {
+      const customer = event.target.result;
+
+      console.log('First name: ', customer.first_name);
+      console.log('Last name: ', customer.last_name);
+    };
   };
 
 
