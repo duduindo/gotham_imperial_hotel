@@ -1,6 +1,8 @@
 # Examples - Google Developers
 * Sugestões de entrega - responder solicitações
  * https://developers.google.com/web/fundamentals/instant-and-offline/offline-cookbook/?hl=pt-br#serving-suggestions
+ * Better:
+    * https://jakearchibald.com/2014/offline-cookbook/
 
 # Chapert - 5 Embracing Offline-Fisrt
 ## Common Caching Patterns
