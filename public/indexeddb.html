@@ -19,12 +19,21 @@
 
   const request = window.indexedDB.open('my-database', 3);
 
-  request.onupgradeneeded = event => {
+  request.onsuccess = event => {
     const db = event.target.result;
+    const customerTransaction = db.transaction('customers');
+    const customerStore = customerTransaction.objectStore('customers');
+    const customerCursor = customerStore.openCursor();
 
-    if (!db.objectStoreNames.contains('customers')) {
-      db.createObjectStore('customers', { keyPath: 'passport_number' })
-    }
+    customerCursor.onsuccess = event => {
+      const cursor = event.target.result;
+
+      if (!cursor) { return; }
+
+      console.log(cursor);
+
+      cursor.continue();
+    };
   };
 
 
