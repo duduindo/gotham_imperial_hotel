@@ -17,22 +17,16 @@
   /*        Write your code below this comment          */
   /******************************************************/
 
-  const request = window.indexedDB.open('my-database', 2);
+  const request = window.indexedDB.open('my-database', 3);
 
   request.onupgradeneeded = event => {
     const db = event.target.result;
-    const oldVersion = event.oldVersion;
 
-    if (oldVersion < 2) {
-      db.createObjectStore('customers', { keyPath: 'passport_number' });
-      console.log('Store: customers');
-    }
-
-    if (oldVersion < 3) {
-      db.createObjectStore('employees', { keyPath: 'employee_id' });
-      console.log('Store: employees');
+    if (!db.objectStoreNames.contains('customers')) {
+      db.createObjectStore('customers', { keyPath: 'passport_number' })
     }
   };
+
 
   /******************************************************/
   </script>
