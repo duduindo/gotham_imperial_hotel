@@ -19,35 +19,23 @@
 
   const request = window.indexedDB.open('my-database', 4);
 
-  request.onupgradeneeded = event => {
+  request.onsuccess = event => {
     const db = event.target.result;
+    const exchangeTransaction = db.transaction('exchange_rates');
+    const exchangeStore = exchangeTransaction.objectStore('exchange_rates');
+    const exchangeIndex = exchangeStore.index('from_idx');
+    const exchangeCursor = exchangeIndex.openCursor('CAD');
 
-    if (!db.objectStoreNames.contains('customers')) {
-      db.createObjectStore('customers', { keyPath: 'passport_number' });
-    }
+    exchangeCursor.onsuccess = event => {
+      const cursor = event.target.result;
 
-    if (!db.objectStoreNames.contains('exchange_rates')) {
-      let exchangeStore = db.createObjectStore('exchange_rates', { autoIncrement: true });
+      if (!cursor) { return; }
 
-      exchangeStore.createIndex('from_idx', 'exchange_from', { unique: false });
-      exchangeStore.createIndex('to_idx', 'exchange_to', { unique: false });
+      const rate = cursor.value;
 
-      exchangeStore.transaction.oncomplete = event => {
-        const exchangeRates = [
-          { exchange_from: 'CAD', exchange_to: 'USD', rate: 0.77  },
-          { exchange_from: 'JPY', exchange_to: 'USD', rate: 0.009 },
-          { exchange_from: 'USD', exchange_to: 'CAD', rate: 1.2   },
-          { exchange_from: 'CAD', exchange_to: 'JPY', rate: 81.60 },
-        ];
-
-        exchangeStore = db.transaction('exchange_rates', 'readwrite').objectStore('exchange_rates');
-
-        for (let i = 0; i < exchangeRates.length; i++) {
-          exchangeStore.add(exchangeRates[i]);
-        }
-      };
-    }
-
+      console.log(`${rate.exchange_from} to ${rate.exchange_to}: ${rate.rate}`);
+      cursor.continue();
+    };
 
 
   };
