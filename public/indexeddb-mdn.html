@@ -1,0 +1,95 @@
+'<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IndexedDB Playground</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/gih.css">
+  <link href="https://fonts.googleapis.com/css?family=Lato:300,600,900" rel="stylesheet">
+</head>
+<body class="playground-page">
+
+  <script>
+  const l = console.log;
+  /******************************************************/
+  /*              Chapter 6. IndexedDB                  */
+  /*        Write your code below this comment          */
+  /******************************************************/
+
+  const dbName = 'clientes';
+
+  const dadosClientes = [
+    { ssn: '444-44-4444', nome: 'Bill', idade: 35, email: 'bill@company.com' },
+    { ssn: '555-55-5555', nome: 'Donna', idade: 32, email: 'donna@home.org' },
+  ];
+
+  const request = indexedDB.open(dbName, 2);
+
+  request.onerror = event => {
+    // Tratar erros
+  };
+
+  request.onupgradeneeded = event => {
+    const db = event.target.result;
+
+    // Cria um objectStore para conter a informação sobre nossos clientes. Nós vamos
+    // usar 'ssn' como key path porque sabemos que é único
+    const objectStore = db.createObjectStore('clientes', { keyPath: 'ssn' });
+
+    // Cria um índice para buscar clientes pelo nome. Podemos ter nomes
+    // duplicados, então não podemos usar como índice único
+    objectStore.createIndex('nome-indice', 'nome', { unique: false });
+
+    // Cria um índice para buscar clientes por email. Queremos ter certeza
+    // que bçai terenis 2 ckuebtes com o mesmo e-mail
+    objectStore.createIndex('email-indice', 'email', { unique: true });
+
+    // Usando transação oncomplete para afirmar que a criação do objectStore
+    // é terminada antes de adicionar algum dado nele
+    objectStore.transaction.oncomplete = event => {
+      // Armazenando valores no nome objectStore
+      const clientesObjectStore = db.transaction('clientes', 'readwrite').objectStore('clientes');
+
+      for (let i in dadosClientes) {
+        clientesObjectStore.add(dadosClientes[i]);
+      }
+
+      /**
+       *
+       * Parei aqui:
+       *  https://developer.mozilla.org/pt-BR/docs/IndexedDB/Usando_IndexedDB#Estruturando_o_banco
+       *
+       */
+    };
+  };
+
+
+
+
+
+  /******************************************************/
+  </script>
+
+  <div id="background-image"></div>
+  <header>
+    <div class="hotel-slogan">
+      <h1>IndexedDB Playground</h1>
+    </div>
+  </header>
+
+  <div class="container-fluid" id="instructions-container">
+    <div class="row">
+      <div id="instructions-code">
+        <h2>Code that should be added to the page goes inside indexeddb.html</h2>
+        <img src="/img/playground-code.png">
+      </div>
+      <div id="instructions-console">
+        <h2>Console code should be run in the browser’s console.</h2>
+        <img src="/img/playground-console.png">
+      </div>
+    </div>
+  </div>
+</body>
+</html>
