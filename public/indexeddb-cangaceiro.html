@@ -11,24 +11,39 @@
 </head>
 <body class="playground-page">
 
-  <script>
+  <script type="module">
   /******************************************************/
   /*              Chapter 6. IndexedDB                  */
   /*        Write your code below this comment          */
   /******************************************************/
+  import Negociacao from './cangaceiro/cangaceiro-javascript-master/14/client/app/domain/negociacao/Negociacao.js';
 
   const openRequest = window.indexedDB.open('jscangaceiro', 2);
 
-  // openRequest.onupgradeneeded  = e => {
-  //   const connection = e.target.result;
+  function add(conn = IDBDatabase.prototype) {
+    const negociacao = new Negociacao(new Date(), 200, 1);
 
-  //   if (connection.objectStoreNames.contains('negociacoes')) {
-  //     connection.deleteObjectStore('negociacoes');
-  //   }
+    conn
+      .transaction(['negociacoes'], 'readwrite')
+      .objectStore('negociacoes')
+      .add(negociacao);
+  }
 
-  //   connection.createObjectStore('negociacoes', { autoIncrement: true });
-  // };
+  openRequest.onupgradeneeded  = e => {
+    const connection = e.target.result;
 
+    if (connection.objectStoreNames.contains('negociacoes')) {
+      connection.deleteObjectStore('negociacoes');
+    }
+
+    connection.createObjectStore('negociacoes', { autoIncrement: true });
+  };
+
+  openRequest.onsuccess = e => {
+    const connection = e.target.result;
+
+    add(connection);
+  };
 
 
   /******************************************************/
