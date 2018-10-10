@@ -16,34 +16,50 @@
   /*              Chapter 6. IndexedDB                  */
   /*        Write your code below this comment          */
   /******************************************************/
-  import Negociacao from './cangaceiro/cangaceiro-javascript-master/14/client/app/domain/negociacao/Negociacao.js';
+  //import Negociacao from './cangaceiro/cangaceiro-javascript-master/14/client/app/domain/negociacao/Negociacao.js';
+  const stores = ['negociacoes'];
 
-  const openRequest = window.indexedDB.open('jscangaceiro', 2);
-
-  function add(conn = IDBDatabase.prototype) {
-    const negociacao = new Negociacao(new Date(), 200, 1);
-
-    conn
-      .transaction(['negociacoes'], 'readwrite')
-      .objectStore('negociacoes')
-      .add(negociacao);
-  }
-
-  openRequest.onupgradeneeded  = e => {
-    const connection = e.target.result;
-
-    if (connection.objectStoreNames.contains('negociacoes')) {
-      connection.deleteObjectStore('negociacoes');
+  class ConnectionFactory {
+    constructor() {
+      throw new Error('Não é possível criar instâncias dessa classe');
     }
 
-    connection.createObjectStore('negociacoes', { autoIncrement: true });
-  };
+    static _createStores(connection) {
+      // Itera no array para construir as Stores
+      stores.forEach(store => {
+        if (connection.objectStoreNames.contains(store)) {
+          connection.deleteObjectStore(store);
+        }
 
-  openRequest.onsuccess = e => {
-    const connection = e.target.result;
+        connection.createObjectStore(store, { autoIncrement: true });
+      });
+    }
 
-    add(connection);
-  };
+    static getConnection() {
+      return new Promise((resolve, reject) => {
+        const openRequest = window.indexedDB.open('jscangaceiro', 2);
+
+        openRequest.onupgradeneeded = e => {
+          // Passa a conexão para o método
+          ConnectionFactory._createStores(e.target.result);
+        };
+
+        openRequest.onsuccess = e => {
+          // passa o resultado (conexão) para a promise!
+          resolve(e.target.result)
+        };
+
+        openRequest.onerror = e => {
+          console.log(e.target.error);
+
+          // passa o erro para reject de promise!
+          reject(e.target.error.name);
+        };
+      });
+    }
+  }
+
+
 
 
   /******************************************************/
