@@ -19,77 +19,12 @@
 
   const request = window.indexedDB.open('my-database', 4);
 
-  request.onupgradeneeded = event => {
-    const db = event.target.result;
-
-    if (!db.objectStoreNames.contains('customers')) {
-      db.createObjectStore('customers', { keyPath: 'passport_number' });
-    }
-
-    if (!db.objectStoreNames.contains('exchange_rates')) {
-      const exchangeStore = db.createObjectStore('exchange_rates', { autoIncrement: true });
-
-      exchangeStore.createIndex('from_idx', 'exchange_from', { unique: false });
-      exchangeStore.createIndex('to_idx', 'exchange_to', { unique: false });
-
-      exchangeStore.transaction.oncomplete = event => {
-        const exchangeRates = [
-          { exchange_from: 'CAD', exchange_to: 'USD', rate: 0.77 },
-          { exchange_from: 'JPY', exchange_to: 'USD', rate: 0.009 },
-          { exchange_from: 'USD', exchange_to: 'CAD', rate: 1.29 },
-          { exchange_from: 'CAD', exchange_to: 'JPY', rate: 81.60 },
-        ];
-
-        const exchangeStoreComplete = db.transaction('exchange_rates', 'readwrite').objectStore('exchange_rates');
-
-        for (let n = 0; n < exchangeRates.length; n++) {
-          exchangeStoreComplete.add( exchangeRates[n] );
-        }
-      };
-    }
-  };
-
-  // request.onsuccess = event => {
-  //   const db = event.target.result;
-  //   const customerData = [
-  //     { passport_number: 6651, first_name: 'Tal', last_name: 'Ater' },
-  //     { passport_number: 7727, first_name: 'Archie', last_name: 'Stevens' },
-  //   ];
-  //   const customerTransaction = db.transaction('customers', 'readwrite');
-
-  //   customerTransaction.onerror = event => {
-  //     console.log('Error: ', event.target.error);
-  //   };
-
-  //   const customerStore = customerTransaction.objectStore('customers');
-
-  //   for (let n = 0; n < customerData.length; n++) {
-  //     customerStore.add(customerData[n]);
-  //   }
-  // };
-
   request.onsuccess = event => {
     const db = event.target.result;
-    const customerStore = db.transaction('customers', 'readwrite').objectStore('customers');
-    const customerCursor = customerStore.openCursor();
 
-    customerCursor.onsuccess = event => {
-      const cursor = event.target.result;
-
-      if (!cursor) { return; }
-
-      const customer = cursor.value;
-
-      if (customer.first_name === 'Archie') {
-        customer.first_name = 'Archer';
-        cursor.update(customer);
-      } else {
-        customer.first_name = 'Tom';
-        customerStore.put(customer);
-      }
-
-      cursor.continue();
-    };
+    db.transaction('exchange_rates', 'readwrite')
+      .objectStore('exchange_rates')
+      .delete(2);
   };
 
 
