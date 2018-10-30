@@ -50,21 +50,13 @@
   };
 
   request.onsuccess = event => {
+    const updateRate = { exchange_from: 'CAD', exchange_to: 'ILS', rate: 1.2 };
     const db = event.target.result;
-    const exchangeTransaction = db.transaction('exchange_rates');
-    const exchangeStore = exchangeTransaction.objectStore('exchange_rates');
-    const exchangeIndex = exchangeStore.index('from_idx');
-    const exchangeCursor = exchangeIndex.openCursor('CAD');
+    const exchangeStore = db.transaction('exchange_rates', 'readwrite').objectStore('exchange_rates');
+    const request = exchangeStore.put(updateRate, 2);
 
-    exchangeCursor.onsuccess = event => {
-      const cursor = event.target.result;
-
-      if (!cursor) { return; }
-
-      const rate = cursor.value;
-
-      console.log(`${rate.exchange_from} to ${rate.exchange_to}: ${rate.rate}`);
-      cursor.continue();
+    request.onsuccess = event => {
+      console.log('Updated');
     };
   };
 
