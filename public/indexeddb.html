@@ -49,14 +49,46 @@
     }
   };
 
-  request.onsuccess = event => {
-    const updateRate = { exchange_from: 'CAD', exchange_to: 'ILS', rate: 1.2 };
-    const db = event.target.result;
-    const exchangeStore = db.transaction('exchange_rates', 'readwrite').objectStore('exchange_rates');
-    const request = exchangeStore.put(updateRate, 2);
+  // request.onsuccess = event => {
+  //   const db = event.target.result;
+  //   const customerData = [
+  //     { passport_number: 6651, first_name: 'Tal', last_name: 'Ater' },
+  //     { passport_number: 7727, first_name: 'Archie', last_name: 'Stevens' },
+  //   ];
+  //   const customerTransaction = db.transaction('customers', 'readwrite');
 
-    request.onsuccess = event => {
-      console.log('Updated');
+  //   customerTransaction.onerror = event => {
+  //     console.log('Error: ', event.target.error);
+  //   };
+
+  //   const customerStore = customerTransaction.objectStore('customers');
+
+  //   for (let n = 0; n < customerData.length; n++) {
+  //     customerStore.add(customerData[n]);
+  //   }
+  // };
+
+  request.onsuccess = event => {
+    const db = event.target.result;
+    const customerStore = db.transaction('customers', 'readwrite').objectStore('customers');
+    const customerCursor = customerStore.openCursor();
+
+    customerCursor.onsuccess = event => {
+      const cursor = event.target.result;
+
+      if (!cursor) { return; }
+
+      const customer = cursor.value;
+
+      if (customer.first_name === 'Archie') {
+        customer.first_name = 'Archer';
+        cursor.update(customer);
+      } else {
+        customer.first_name = 'Tom';
+        customerStore.put(customer);
+      }
+
+      cursor.continue();
     };
   };
 
