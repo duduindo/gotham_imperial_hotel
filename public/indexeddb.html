@@ -22,9 +22,22 @@
   request.onsuccess = event => {
     const db = event.target.result;
 
-    db.transaction('exchange_rates', 'readwrite')
-      .objectStore('exchange_rates')
-      .delete(2);
+    const cursor = db.transaction('customers', 'readwrite')
+      .objectStore('customers')
+      .openCursor()
+      .onsuccess = event => {
+        const cursor = event.target.result;
+
+        if (!cursor) return;
+
+        const customer = cursor.value;
+
+        if (customer.last_name === 'Stevens') {
+          cursor.delete();
+        }
+
+        cursor.continue();
+      };
   };
 
 
