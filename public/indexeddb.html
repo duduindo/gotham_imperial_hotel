@@ -24,19 +24,9 @@
 
     const cursor = db.transaction('customers', 'readwrite')
       .objectStore('customers')
-      .openCursor()
+      .clear()
       .onsuccess = event => {
-        const cursor = event.target.result;
-
-        if (!cursor) return;
-
-        const customer = cursor.value;
-
-        if (customer.last_name === 'Stevens') {
-          cursor.delete();
-        }
-
-        cursor.continue();
+        console.warn('Object store cleared');
       };
   };
 
