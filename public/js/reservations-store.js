@@ -6,11 +6,11 @@ var DB_NAME = "gih-reservations";
 //
 const openDatabase = () =>
   new Promise((resolve, reject) => {
-    if (!self.IndexedDB) {
+    if (!self.indexedDB) {
       reject('IndexedDB not supported');
     }
 
-    const request = self.IndexedDB.open(DB_NAME, DB_VERSION);
+    const request = self.indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = event => reject(`Database error: ${event.target.error}`);
 
@@ -122,9 +122,7 @@ const getReservations = (indexName, indexValue) =>
           }
         };
       }).catch(() => {
-        getReservationsFromServer().then(function(reservations) {
-          resolve(reservations);
-        });
+        getReservationsFromServer().then(reservations => resolve(reservations));
       });
   });
 
@@ -138,3 +136,14 @@ const getReservationsFromServer = () =>
       .then(response => response.json())
       .then(reservations => resolve(reservations));
   });
+
+
+
+/**
+
+Page's eBook: location 2934
+
+Execute:
+ addToObjectStore('reservations', { id: 123, nights: 2, guests: 2})
+
+*/
