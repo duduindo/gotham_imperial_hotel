@@ -6,20 +6,14 @@ var DB_NAME = "gih-reservations";
 //
 const openDatabase = () =>
   new Promise((resolve, reject) => {
-
-    // Make sure IndexedDB is supported before attempting to use it
     if (!self.IndexedDB) {
       reject('IndexedDB not supported');
     }
 
     const request = self.IndexedDB.open(DB_NAME, DB_VERSION);
 
-    // Error
-    //
     request.onerror = event => reject(`Database error: ${event.target.error}`);
 
-    // Upgrade needed
-    //
     request.onupgradeneeded = event => {
       const db = event.target.result;
       const upgradeTransaction = event.target.transaction;
@@ -36,8 +30,6 @@ const openDatabase = () =>
       }
     };
 
-    // Success
-    //
     request.onsuccess = event => resolve(event.target.result);
   });
 
@@ -62,7 +54,7 @@ const addToObjectStore = (storeName, object) =>
       });
   });
 
-
+//
 // Update in Object Store
 //
 const updateInObjectStore = (storeName, id, object) =>
@@ -89,7 +81,9 @@ const updateInObjectStore = (storeName, id, object) =>
       });
   });
 
-
+//
+// Get Reservations
+//
 const getReservations = (indexName, indexValue) =>
   new Promise(resolve => {
     openDatabase()
