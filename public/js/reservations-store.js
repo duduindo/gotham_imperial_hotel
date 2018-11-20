@@ -1,4 +1,4 @@
-var DB_VERSION = 2;
+var DB_VERSION = 1;
 var DB_NAME = "gih-reservations";
 
 //
