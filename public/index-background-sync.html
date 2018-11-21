@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ensuring Offline Functionality with Background Sync</title>
+  <style> body { background-color: lightgrey; } </style>
+</head>
+<body>
+
+
+
+
+  <script>
+
+    navigator.serviceWorker.ready.then(registration => {
+      registration.sync.register('send-messages');
+    });
+
+    // ============= THIS IS IN ServiceWorker =========== //
+    self.addEventListener('sync', event => {
+      if (event.tag === 'send-messages') {
+        event.waitUntil(() => {
+          const sent = sendMessages();
+
+          if (sent)
+            return Promise.resolve();
+          else
+            return Promise.reject();
+        });
+      }
+    });
+  </script>
+</body>
+</html>
