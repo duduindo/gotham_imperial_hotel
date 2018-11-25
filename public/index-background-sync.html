@@ -14,21 +14,27 @@
 
     navigator.serviceWorker.ready.then(registration => {
       registration.sync.register('send-messages');
+
+      /*
+        This is return:
+          SyncEvent {
+            isTrusted: true,
+            tag: "send-messages",
+            lastChance: false,
+            type: "sync",
+            target: ServiceWorkerGlobalScope,
+            etc...
+       */
     });
 
     // ============= THIS IS IN ServiceWorker =========== //
-    self.addEventListener('sync', event => {
-      if (event.tag === 'send-messages') {
-        event.waitUntil(() => {
-          const sent = sendMessages();
 
-          if (sent)
-            return Promise.resolve();
-          else
-            return Promise.reject();
-        });
-      }
-    });
+  </script>
+
+  <script>
+    navigator.serviceWorker.register('/index-background-sync.sw.js', {scope: '/index-background-sync.html'})
+      .then(reg => console.log('Scope registered: ', reg.scope))
+      .catch(err => console.log(err))
   </script>
 </body>
 </html>
