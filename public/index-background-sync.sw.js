@@ -1,12 +1,14 @@
-self.addEventListener('sync', event => {
-  if (event.tag === 'send-messages') {
-    event.waitUntil(() => {
-      const sent = sendMessages();
 
-      if (sent)
-        return Promise.resolve();
-      else
-        return Promise.reject();
-    });
-  }
+
+
+
+self.addEventListener('sync', event => {
+   console.log('Event: ', event);
 });
+
+
+self.registration.sync
+  .register('hello-sync')
+  .then(() => self.registration.sync.getTags())
+  .then(tags => console.log(tags)); // Return: ["hello-sync"]
+

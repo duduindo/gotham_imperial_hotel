@@ -13,18 +13,12 @@
   <script>
 
     navigator.serviceWorker.ready.then(registration => {
-      registration.sync.register('send-messages');
+      registration.sync
+        .register('hello-sync')
+        .then(() => registration.sync.getTags())
+        .then(tags => console.log(tags));
 
-      /*
-        This is return:
-          SyncEvent {
-            isTrusted: true,
-            tag: "send-messages",
-            lastChance: false,
-            type: "sync",
-            target: ServiceWorkerGlobalScope,
-            etc...
-       */
+
     });
 
     // ============= THIS IS IN ServiceWorker =========== //
