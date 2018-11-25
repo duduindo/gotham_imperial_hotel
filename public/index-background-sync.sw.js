@@ -3,7 +3,21 @@
 
 
 self.addEventListener('sync', event => {
-   console.log('Event: ', event);
+  if (event.tag === 'add-reservation') {
+    event.waitUntil(
+      addReservation() // NOTE: addReservation only example. It doesn't exist
+        .then(() => Promise.resolve())
+        .catch(error => {
+          if (event.lastChance) {
+            return removeReservation();
+          } else {
+            return Promise.reject();
+          }
+        })
+    );
+  }
+
+  console.log(event.lastChance); // TRUE or FALSE
 });
 
 
