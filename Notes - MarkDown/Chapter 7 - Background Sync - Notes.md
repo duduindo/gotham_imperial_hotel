@@ -86,3 +86,24 @@ self.addEventListener('sync', event => {
 Requests that complete successfully are removed from the IndexedDB queue (using **deleteRequestFromQueue()**).
 
 
+
+### Passing Data in the Sync Event Tag
+Location 3642
+
+*[...]* **Your existing code may look like this:**
+
+```js
+const likePost = postId => fetch(`/like-post?id=${ postId }`);
+```
+
+But sometimes there is value in keeping things simple. Replacing the `likePost` function with the
+following code can achieve similiar results without having to maintain a database of posts to like:
+
+```js
+const likePost = postId => {
+  navigator.serviceWorker.ready.then(registration => {
+    registration.sync.register(`like-post-${ postId }`);
+  });
+};
+
+```
