@@ -1,15 +1,17 @@
 
 
 
-
+/**
+ * NOTE: addReservation only example. It doesn't exist
+ */
 self.addEventListener('sync', event => {
   if (event.tag === 'add-reservation') {
     event.waitUntil(
-      addReservation() // NOTE: addReservation only example. It doesn't exist
+      addReservation() // eslint-disable-line no-undef
         .then(() => Promise.resolve())
         .catch(error => {
           if (event.lastChance) {
-            return removeReservation();
+            return removeReservation(); // eslint-disable-line no-undef
           } else {
             return Promise.reject();
           }
