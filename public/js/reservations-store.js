@@ -96,4 +96,9 @@ const getReservations = () =>
     });
   });
 
-const getReservationsFromServer = () => new Promise(resolve => $.getJSON('/reservations.json', resolve));
+const getReservationsFromServer = () =>
+  new Promise(resolve => {
+    fetch('/reservations.json')
+      .then(response => response.json())
+      .then(reservations => resolve(reservations));
+  });

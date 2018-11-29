@@ -1,3 +1,6 @@
+
+importScripts('/js/reservations-store.js');
+
 var CACHE_NAME = "gih-cache-v5";
 var CACHED_URLS = [
   // Our HTML
