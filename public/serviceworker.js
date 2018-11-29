@@ -145,3 +145,31 @@ self.addEventListener("activate", function(event) {
     })
   );
 });
+
+const createReservationUrl = reservationDetails => {
+  const reservationUrl = new URL('http://localhost:8443/make-reservation');
+
+  Object.keys(reservationDetails).forEach(key => {
+    reservationUrl.searchParams.append(key, reservationDetails[key]);
+  });
+
+  return reservationUrl;
+};
+
+const syncReservations = () => {
+  return getReservations('idx_status', 'Sending')
+    .then(reservations => {
+      return Promise.all(
+        reservations.map(reservation => {
+          const reservationUrl = createReservationUrl(reservation);
+
+          return fetch(reservationUrl);
+        })
+      );
+    });
+};
+
+self.addEventListener('sync', event => {
+  if (event.tag === 'sync-reservations')
+    event.waitUntil(syncReservations());
+});

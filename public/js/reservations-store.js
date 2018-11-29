@@ -1,4 +1,4 @@
-var DB_VERSION = 1;
+var DB_VERSION = 2;
 var DB_NAME = "gih-reservations";
 
 var openDatabase = function() {
@@ -12,13 +12,18 @@ var openDatabase = function() {
       reject("Database error: " + event.target.error);
     };
 
-    request.onupgradeneeded = function(event) {
-      var db = event.target.result;
-      if (!db.objectStoreNames.contains("reservations")) {
-        db.createObjectStore("reservations",
-          { keyPath: "id" }
-        );
-      }
+    request.onupgradeneeded = event => {
+      const db = event.target.result;
+      const upgradeTransaction = event.target.transaction;
+      let reservationsStore = null;
+
+      if (!db.objectStoreNames.contains('reservations'))
+        reservationsStore = db.createObjectStore('reservations', { keyPath: 'id' });
+      else
+        reservationsStore = upgradeTransaction.objectStore('reservations');
+
+      if (!reservationsStore.indexNames.contains('idx_status'))
+        reservationsStore.createIndex('idx_status', 'status', { unique: false });
     };
 
     request.onsuccess = function(event) {
@@ -65,39 +70,50 @@ var updateInObjectStore = function(storeName, id, object) {
   });
 };
 
-var getReservations = function() {
-  return new Promise(function(resolve) {
-    openDatabase().then(function(db) {
-      var objectStore = openObjectStore(db, "reservations");
-      var reservations = [];
-      objectStore.openCursor().onsuccess = function(event) {
-        var cursor = event.target.result;
-        if (cursor) {
-          reservations.push(cursor.value);
-          cursor.continue();
-        } else {
-          if (reservations.length > 0) {
-            resolve(reservations);
+
+const getReservations = (indexName, indexValue) =>
+  new Promise(resolve => {
+    openDatabase()
+      .then(db => {
+        const objectStore = openObjectStore(db, 'reservations');
+        const reservations = [];
+        let cursor = null;
+
+        if (indexName && indexValue)
+          cursor = objectStore.index(indexName).openCursor(indexValue);
+        else
+          cursor = objectStore.openCursor();
+
+        cursor.onsuccess = event => {
+          const cursor = event.target.result;
+
+          if (cursor) {
+            reservations.push(cursor.value);
+            cursor.continue();
           } else {
-            getReservationsFromServer().then(function(reservations) {
-              openDatabase().then(function(db) {
-                var objectStore = openObjectStore(db, "reservations", "readwrite");
-                for (var i = 0; i < reservations.length; i++) {
-                  objectStore.add(reservations[i]);
-                }
-                resolve(reservations);
-              });
-            });
+            if (reservations.length) {
+              resolve(reservations);
+            }
+            else {
+              getReservationsFromServer()
+                .then(reservations => {
+                  openDatabase().then(db => {
+                    const objectStore  = openObjectStore(db, 'reservations', 'readwrite');
+
+                    reservations.forEach(item => objectStore.add(item));
+                    resolve(reservations);
+                  });
+                });
+            }
           }
-        }
-      };
-    }).catch(function() {
-      getReservationsFromServer().then(function(reservations) {
-        resolve(reservations);
+        };
+      })
+      .catch(() => {
+        getReservationsFromServer().then(reservations => resolve(reservations));
       });
-    });
   });
-};
+
+
 
 var getReservationsFromServer = function() {
   return new Promise(function(resolve) {
