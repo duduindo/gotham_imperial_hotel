@@ -1,92 +1,99 @@
+const DB_VERSION = 1;
+const DB_NAME = 'gih-reservations';
 
 
-const openDatabase = () => {
-	// Make sure IndexedDB is supported before attempting to use it
-	if (!window.indexedDB)
-		return false;
+const openDatabase = () =>
+  new Promise((resolve, reject) => {
+    if (!window.indexedDB)
+      reject('IndexedDB not supported');
 
-	const request = window.indexedDB.open('gih-reservations', 1);
+    const request = window.indexedDB.open(DB_NAME, DB_VERSION);
 
-	request.onupgradeneeded = event => {
-		const db = event.target.result;
+    request.onerror = event => reject(`Database error: ${ event.target.error }`);
 
-		if (!db.objectStoreNames.contains('reservations'))
-			db.createObjectStore('reservations', { keyPath: 'id' });
-	};
+    request.onupgradeneeded = event => {
+      const db = event.target.result;
 
-	return request;
-};
-
-
-const openObjectStore = (storeName, successCallback, transactionMode) => {
-	let openDb = openDatabase();
-
-	if (!openDb)
-		return false;
-
-	openDb.onsuccess = event => {
-		const db = event.target.result;
-		const objectStore = db
-			.transaction(storeName, transactionMode)
-			.objectStore(storeName);
-
-		successCallback(objectStore);
-	};
-
-	return true;
-};
-
-
-const getReservations = successCallback => {
-  const reservations = [];
-  const db = openObjectStore('reservations', objectStore => {
-    objectStore.openCursor().onsuccess = event => {
-      const cursor = event.target.result;
-
-      if (cursor) {
-        reservations.push(cursor.value);
-        cursor.continue();
-      } else {
-        if (reservations.length) {
-          successCallback(reservations);
-        } else {
-          $.getJSON('/reservations.json', reservations => {
-            openObjectStore('reservations', reservationsStore => {
-              reservations.forEach(item => reservationsStore.add(item));
-
-              successCallback(reservations);
-            }, 'readwrite');
-          });
-        }
-      }
+      if (!db.objectStoreNames.contains('reservations'))
+        db.createObjectStore('reservations', { keyPath: 'id' });
     };
+
+    request.onsuccess = event => resolve(event.target.result);
   });
 
-  if (!db) {
-    $.getJSON('/reservations.json', successCallback);
-  }
-};
+
+const openObjectStore = (db, storeName, transactionMode) =>
+  db
+    .transaction(storeName, transactionMode)
+    .objectStore(storeName);
 
 
 const addToObjectStore = (storeName, object) =>
-  openObjectStore(storeName, store => store.add(object), 'readwrite');
+  new Promise((resolve, reject) => {
+    openDatabase()
+      .then(db => {
+        openObjectStore(db, storeName, 'readwrite').add(object).onsuccess = resolve;
+      })
+      .catch(errorMessage => reject(errorMessage));
+  });
 
 
-const updateInObjectStore = (storeName, id, object) => {
-  openObjectStore(storeName, objectStore => {
-    objectStore.openCursor().onsuccess = event => {
-      const cursor = event.target.result;
+const updateInObjectStore = (storeName, id, object) =>
+  new Promise((resolve, reject) => {
+    openDatabase()
+      .then(db => {
+        openObjectStore(db, storeName, 'readwrite').openCursor()
+          .onsuccess = event => {
+            const cursor = event.target.result;
 
-      if (!cursor) return;
+            if (!cursor)
+              reject('Reservation not found in object store');
 
-      if (cursor.value.id === id) {
-        cursor.update(object);
-        return;
-      }
+            if (cursor.value.id === id) {
+              cursor.update(object).onsuccess = resolve;
+              return;
+            }
 
-      cursor.continue();
-    };
-  }, 'readwrite');
-};
+            cursor.continue();
+          };
+      })
+      .catch(errorMessage => reject(errorMessage));
+  });
 
 
+const getReservations = () =>
+  new Promise(resolve => {
+    openDatabase().then(db => {
+      const objectStore = openObjectStore(db, 'reservations', 'readonly');
+      const reservations = [];
+
+      objectStore.openCursor()
+        .onsuccess = event => {
+          const cursor = event.target.result;
+
+          if (cursor) {
+            reservations.push(cursor.value);
+            cursor.continue();
+          } else {
+            if (reservations.length) {
+
+              resolve(reservations);
+            } else {
+              getReservationsFromServer()
+                .then(reservations => {
+                  openDatabase()
+                    .then(db => {
+                      const objectStore = openObjectStore(db, 'reservations', 'readwrite');
+
+                      reservations.forEach(item => objectStore.add(item));
+                      resolve(reservations);
+                    });
+                });
+            }
+
+          }
+        };
+    });
+  });
+
+const getReservationsFromServer = () => new Promise(resolve => $.getJSON('/reservations.json', resolve));
